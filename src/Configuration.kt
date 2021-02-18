@@ -42,8 +42,9 @@ data class ConfigurationParameter(
     val defaultValue: ParameterValue,
     val jsonKey: String,
     val acceptType: AcceptsType,
+    val configurationCategory: ConfigurationCategory,
     val description: String? = null,
-   @Transient val outputMapper: OutputMapper? = null // if no change is required
+    @Transient val outputMapper: OutputMapper? = null // if no change is required
 )
 
 val ConfigurationParameters = listOf(
@@ -53,7 +54,11 @@ val ConfigurationParameters = listOf(
         "M4_CORE",
         ParameterIntegerValue(2),
         "cores",
-        AcceptsType(INTEGER, Validation(GREATER_THAN, number = -1)) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        AcceptsType(
+            INTEGER,
+            Validation(GREATER_THAN, number = -1)
+        ) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        ConfigurationCategory.CPU,
         description = "Number of cores"
     ),
     ConfigurationParameter(
@@ -62,7 +67,11 @@ val ConfigurationParameters = listOf(
         "M4_VC",
         ParameterIntegerValue(2),
         "vcs",
-        AcceptsType(INTEGER, Validation(GREATER_THAN, number = -1)) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        AcceptsType(
+            INTEGER,
+            Validation(GREATER_THAN, number = -1)
+        ) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        ConfigurationCategory.CPU,
         description = "VCs (meaningful if > 1 core)"
     ),
     ConfigurationParameter(
@@ -71,7 +80,11 @@ val ConfigurationParameters = listOf(
         "M4_PRIO",
         ParameterIntegerValue(2),
         "prios",
-        AcceptsType(INTEGER, Validation(GREATER_THAN, number = -1)) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        AcceptsType(
+            INTEGER,
+            Validation(GREATER_THAN, number = -1)
+        ) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        ConfigurationCategory.CPU,
         description = "Number of priority levels in the NoC"
     ),
     ConfigurationParameter(
@@ -80,7 +93,11 @@ val ConfigurationParameters = listOf(
         "M4_MAX_PACKET_SIZE",
         ParameterIntegerValue(3),
         "max_packet_size",
-        AcceptsType(INTEGER, Validation(GREATER_THAN, number = -1)) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        AcceptsType(
+            INTEGER,
+            Validation(GREATER_THAN, number = -1)
+        ) { value -> value.toIntOrNull() != null && value.toInt() >= 0 },
+        ConfigurationCategory.CPU,
         description = "Max number of payload flits in a packet"
     ),
     ConfigurationParameter(
@@ -90,6 +107,7 @@ val ConfigurationParameters = listOf(
         ParameterBooleanValue(true),
         "impl",
         AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.CPU,
         description = "For implementation (vs. simulation)",
     ),
     ConfigurationParameter(
@@ -99,6 +117,7 @@ val ConfigurationParameters = listOf(
         ParameterBooleanValue(true),
         "soft_reset",
         AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.CPU,
         description = "A hook for a software-controlled reset. None by default",
         outputMapper = OutputMapper { parameterValue ->
             parameterValue as ParameterBooleanValue
@@ -113,6 +132,7 @@ val ConfigurationParameters = listOf(
         ParameterBooleanValue(true),
         "ld_return_align",
         AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.CPU,
         description = "If |mem stages reflect nominal alignment w/ load instruction, this is the nominal load latency.",
         outputMapper = OutputMapper { parameterValue ->
             parameterValue as ParameterBooleanValue
@@ -127,6 +147,7 @@ val ConfigurationParameters = listOf(
         ParameterBooleanValue(false),
         "cpu_blocked",
         AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.CPU,
         description = "A hook for CPU back-pressure in M4_REG_RD_STAGE. Various sources of back-pressure can add to this expression.",
         outputMapper = OutputMapper { parameterValue ->
             parameterValue as ParameterBooleanValue
@@ -140,8 +161,14 @@ val ConfigurationParameters = listOf(
         "M4_BRANCH_PRED",
         ParameterStringValue("fallthrough"),
         "branch_pred",
-        AcceptsType(STRING, Validation(IN, listOf("fallthrough", "two_bit"))) { value -> value in listOf("fallthrough", "two_bit") },
-        description = "A hook for CPU back-pressure in M4_REG_RD_STAGE. Various sources of back-pressure can add to this expression. two_bit or fallthrough are allowed.",
+        AcceptsType(STRING, Validation(IN, listOf("fallthrough", "two_bit"))) { value ->
+            value in listOf(
+                "fallthrough",
+                "two_bit"
+            )
+        },
+        ConfigurationCategory.CPU,
+        description = "A hook for CPU back-pressure in M4_REG_RD_STAGE. Various sources of back-pressure can add to this expression. two_bit or fallthrough",
     ),
 
     // stages
@@ -151,7 +178,8 @@ val ConfigurationParameters = listOf(
         "M4_FETCH_STAGE",
         ParameterBooleanValue(false),
         "fetch_stage_inc",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     ),
     ConfigurationParameter(
         M4_DEFINE,
@@ -159,15 +187,17 @@ val ConfigurationParameters = listOf(
         "M4_DECODE_STAGE",
         ParameterBooleanValue(false),
         "decode_stage_inc",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     ),
     ConfigurationParameter(
         M4_DEFINE,
-        "Branch predict (taken/not-taken)",
+        "Branch predict",
         "M4_BRANCH_PRED_STAGE",
         ParameterBooleanValue(false),
         "branch_pred_stage_inc",
         AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE,
         description = "Currently, we mispredict to a known branch target, so branch prediction is only relevant if target is computed before taken/not-taken is known. For other ISAs prediction is forced to fallthrough, and there is no pred-taken redirect"
     ),
     ConfigurationParameter(
@@ -176,7 +206,8 @@ val ConfigurationParameters = listOf(
         "M4_REG_RD_STAGE",
         ParameterBooleanValue(false),
         "reg_rd_stage_inc",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     ),
     ConfigurationParameter(
         M4_DEFINE,
@@ -184,7 +215,9 @@ val ConfigurationParameters = listOf(
         "M4_EXECUTE_STAGE",
         ParameterBooleanValue(false),
         "execute_stage_inc",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
+
     ),
     ConfigurationParameter(
         M4_DEFINE,
@@ -192,7 +225,8 @@ val ConfigurationParameters = listOf(
         "M4_RESULT_STAGE",
         ParameterBooleanValue(false),
         "result_stage",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     ),
     ConfigurationParameter(
         M4_DEFINE,
@@ -200,7 +234,8 @@ val ConfigurationParameters = listOf(
         "M4_REG_WR_STAGE",
         ParameterBooleanValue(false),
         "reg_wr_stage",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     ),
     ConfigurationParameter(
         M4_DEFINE,
@@ -208,7 +243,8 @@ val ConfigurationParameters = listOf(
         "M4_MEM_WR_STAGE",
         ParameterBooleanValue(false),
         "mem_wr_stage",
-        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") }
+        AcceptsType(BOOLEAN, Validation.isTrueOrFalse) { value -> value.toLowerCase() in listOf("true", "false") },
+        ConfigurationCategory.STAGE
     )
 )
 
@@ -348,6 +384,11 @@ sealed class ParameterValue(val parameterInputType: ParameterInputType) {
         }
 
     }
+}
+
+enum class ConfigurationCategory {
+    CPU,
+    STAGE
 }
 
 @Serializable
